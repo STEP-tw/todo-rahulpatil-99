@@ -35,4 +35,22 @@ describe('app',()=>{
       })
     })
   })
+
+  describe('POST /index.html',()=>{
+    it('redirects to home for valid user',done=>{
+      request(app,{method:'POST',url:'/index.html',body:'userName=rahul'},res=>{
+        th.should_be_redirected_to(res,'/home.html');
+        th.should_not_have_cookie(res,'message');
+        done();
+      })
+    })
+
+    it('redirects to login for inValid user',done=>{
+      request(app,{method:'POST',url:'/index.html',body:'userName=abc'},res=>{
+        th.should_be_redirected_to(res,'/index.html');
+        th.should_have_expiring_cookie(res,'message',"login failed");
+        done();
+      })
+    })
+  })
 })
