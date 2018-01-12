@@ -53,4 +53,16 @@ describe('app',()=>{
       })
     })
   })
+
+  describe('GET /create.html',()=>{
+    it('gives the create todo page',done=>{
+      request(app,{method:'GET',url:'/create.html',body:'userName=rahul'},res=>{
+        th.status_is_ok(res);
+        th.content_type_is(res,'text/html');
+        th.body_contains(res,"title");
+        th.body_contains(res,"description");
+        done();
+      })
+    })
+  })
 })
