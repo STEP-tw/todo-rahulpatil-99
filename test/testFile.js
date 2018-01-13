@@ -36,11 +36,7 @@ describe('File',()=>{
   describe('getTodoItems',()=>{
     it('should give the todo items in the file',()=>{
       let sample = new File('sample',"sample test");
-      let item1={content:"write plan", status:false};
-      let item2={content:"write test", status:false};
-      sample.addTodoItem(item1);
-      sample.addTodoItem(item2);
-      assert.deepEqual(sample.getTodoItems(),[item1,item2]);
+      assert.deepEqual(sample.getTodoItems(),[]);
     })
   })
 
@@ -49,7 +45,7 @@ describe('File',()=>{
       let sample = new File('sample',"sample test");
       let item={content:"write test", status:false};
       sample.addTodoItem(item);
-      assert.deepOwnInclude(sample.getTodoItems(),item);
+      assert.deepEqual(sample.getTodoItems(),[item]);
     })
   })
 
