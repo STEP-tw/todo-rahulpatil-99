@@ -21,12 +21,13 @@ let getContentType=function(file){
 let createFileForNewUser=function(){
   if(!fs.existsSync(`./data/${currentUser.userName}.json`)){
     console.log("hii");
-    fs.writeFileSync(`./data/${currentUser.userName}.json`," ");
+    fs.writeFileSync(`./data/${currentUser.userName}.json`,"{}");
   }
   return;
 }
 let getUserData=function(){
   let userData=fs.readFileSync(`./data/${currentUser.userName}.json`,'utf8');
+  if(!userData) return " ";
   return JSON.parse(userData);
 }
 let getTODO=function(todoName){
@@ -35,14 +36,14 @@ let getTODO=function(todoName){
 }
 let convertTODOtoHtml=function(todoDetails){
   let html=`<h1>${todoDetails.title}</h1><h2>${todoDetails.description}`;
-  let items= todoDetails.item.map(function(item){
+  let items= todoDetails.items.map(function(item){
     return `<h4>* ${item.todoItem}     ${item.status}</h4>`;
   }).join('')||'';
   return html+items;
 }
-let convertToHtml=function(req,res){
+let generateHandlerForTODO=function(req,res){
   let userData=getUserData();
-  return Object.keys(userData).map(function(name){
+  Object.keys(userData).map(function(name){
     app.get(`/${name}`,(req,res)=>{
       if(!currentUser){
         res.redirect('/index.html');
@@ -52,10 +53,16 @@ let convertToHtml=function(req,res){
       res.write(convertTODOtoHtml(todoDetails));
       currentTodoFile=`${name}`;
       res.write('<h3><a href="addItem.html">add</a></h3>');
+      res.write('<h3><a href="done.html">done</a></h3>');
       res.write('<h3><a href="home.html">Home</a></h3>');
       res.write('<h3><a href="logout.html">Logout</a></h3>');
       res.end();
     });
+  })
+}
+let convertToHtml=function(req,res){
+  let userData=getUserData();
+  return Object.keys(userData).map(function(name){
     return "<h4><a href="+`/${name}`+`>${name}</a></h4>`;
   }).join('')|| "";
 }
@@ -93,6 +100,7 @@ app.get('/home.html',(req,res)=>{
   let html=fs.readFileSync("./public/home.html",'utf8');
   res.setHeader('Content-Type',getContentType('/home.html'));
   res.write(`<h1>WELCOME ${currentUser.userName}</h1>`);
+  generateHandlerForTODO(req,res);
   let newcontent=html.replace('replacer',convertToHtml(req,res));
   res.write(newcontent);
   currentTodoFile="";
@@ -114,7 +122,7 @@ app.post('/create.html',(req,res)=>{
   let userData=getUserData();
   let todoFile=req.body.title;
   userData[todoFile] = req.body;
-  userData[todoFile].item=[];
+  userData[todoFile].items=[];
   fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
   currentTodoFile=todoFile;
   res.redirect('/addItem.html');
@@ -131,15 +139,39 @@ app.get('/addItem.html',(req,res)=>{
   res.end();
 })
 app.post('/addItem.html',(req,res)=>{
-  let userUpdate=req.body;
+  let givenItem=req.body;
   let userData=getUserData();
   let todo=getTODO(currentTodoFile);
-  todo.item.push(userUpdate);
+  todo.item.push(givenItem);
   userData[currentTodoFile]=todo;
   console.log(userData);
   fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
   res.redirect('/home.html');
 });
+// =========================================
+app.get('/done.html',(req,res)=>{
+  if(!currentUser){
+      res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
+    res.redirect("/index.html");
+    return;
+  }
+  let content=fs.readFileSync("./public/done.html");
+  res.setHeader('Content-Type',getContentType('/done.html'));
+  res.write(content);
+  res.end();
+});
+app.post('/done.html',(req,res)=>{
+  let userUpdate=req.body.todoItem;
+  let userData=getUserData();
+  let todo=getTODO(currentTodoFile);
+  let todoItem = todo.items.find(item=>item.todoItem==userUpdate);
+  todoItem.status="Done";
+  userData[currentTodoFile]=todo;
+  console.log(userData);
+  fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
+  res.redirect('/home.html');
+});
+//
 app.get('/logout.html',(req,res)=>{
   if(!req.cookies.sessionid){
       res.redirect('/index.html');
@@ -149,4 +181,5 @@ app.get('/logout.html',(req,res)=>{
     res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
     res.redirect('/index.html');
 });
+
 module.exports = app;
