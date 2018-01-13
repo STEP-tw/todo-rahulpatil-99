@@ -54,6 +54,7 @@ let generateHandlerForTODO=function(req,res){
       currentTodoFile=`${name}`;
       res.write('<h3><a href="addItem.html">add</a></h3>');
       res.write('<h3><a href="done.html">done</a></h3>');
+      res.write('<h3><a href="notDone.html">notDone</a></h3>');
       res.write('<h3><a href="home.html">Home</a></h3>');
       res.write('<h3><a href="logout.html">Logout</a></h3>');
       res.end();
@@ -142,13 +143,13 @@ app.post('/addItem.html',(req,res)=>{
   let givenItem=req.body;
   let userData=getUserData();
   let todo=getTODO(currentTodoFile);
-  todo.item.push(givenItem);
+  todo.items.push(givenItem);
   userData[currentTodoFile]=todo;
   console.log(userData);
   fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
   res.redirect('/home.html');
 });
-// =========================================
+
 app.get('/done.html',(req,res)=>{
   if(!currentUser){
       res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
@@ -171,7 +172,29 @@ app.post('/done.html',(req,res)=>{
   fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
   res.redirect('/home.html');
 });
-//
+app.get('/notDone.html',(req,res)=>{
+  if(!currentUser){
+      res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
+    res.redirect("/index.html");
+    return;
+  }
+  let content=fs.readFileSync("./public/notDone.html");
+  res.setHeader('Content-Type',getContentType('/notDone.html'));
+  res.write(content);
+  res.end();
+});
+app.post('/notDone.html',(req,res)=>{
+  let userUpdate=req.body.todoItem;
+  let userData=getUserData();
+  let todo=getTODO(currentTodoFile);
+  let todoItem = todo.items.find(item=>item.todoItem==userUpdate);
+  todoItem.status="notDone";
+  userData[currentTodoFile]=todo;
+  console.log(userData);
+  fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
+  res.redirect('/home.html');
+});
+
 app.get('/logout.html',(req,res)=>{
   if(!req.cookies.sessionid){
       res.redirect('/index.html');
