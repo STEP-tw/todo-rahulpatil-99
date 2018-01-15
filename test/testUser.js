@@ -48,5 +48,4 @@ describe('User',()=>{
       assert.deepEqual(rahul.getAllFiles(),[file1]);
     })
   })
-
 })

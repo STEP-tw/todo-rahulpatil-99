@@ -20,7 +20,6 @@ let getContentType=function(file){
 }
 let createFileForNewUser=function(){
   if(!fs.existsSync(`./data/${currentUser.userName}.json`)){
-    console.log("hii");
     fs.writeFileSync(`./data/${currentUser.userName}.json`,"{}");
   }
   return;
@@ -70,7 +69,10 @@ let convertToHtml=function(req,res){
 
 let app=webApp.create();
 app.get('/',(req,res)=>{
-  res.redirect('/index.html');
+  let content=fs.readFileSync("./public/index.html");
+  res.setHeader('Content-Type',getContentType('/index.html'));
+  res.write(content);
+  res.end();
 });
 app.get('/index.html',(req,res)=>{
   let content=fs.readFileSync("./public/index.html");
@@ -145,11 +147,9 @@ app.post('/addItem.html',(req,res)=>{
   let todo=getTODO(currentTodoFile);
   todo.items.push(givenItem);
   userData[currentTodoFile]=todo;
-  console.log(userData);
   fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
   res.redirect('/home.html');
 });
-
 app.get('/done.html',(req,res)=>{
   if(!currentUser){
       res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
@@ -168,7 +168,6 @@ app.post('/done.html',(req,res)=>{
   let todoItem = todo.items.find(item=>item.todoItem==userUpdate);
   todoItem.status="Done";
   userData[currentTodoFile]=todo;
-  console.log(userData);
   fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
   res.redirect('/home.html');
 });
@@ -190,7 +189,6 @@ app.post('/notDone.html',(req,res)=>{
   let todoItem = todo.items.find(item=>item.todoItem==userUpdate);
   todoItem.status="notDone";
   userData[currentTodoFile]=todo;
-  console.log(userData);
   fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
   res.redirect('/home.html');
 });

@@ -17,8 +17,9 @@ describe('app',()=>{
   describe('GET /',()=>{
     it('redirects to index.html',done=>{
       request(app,{method:'GET',url:'/'},(res)=>{
-        th.should_be_redirected_to(res,'/index.html');
-        assert.equal(res.body,"");
+        th.status_is_ok(res);
+        th.content_type_is(res,'text/html');
+        th.body_contains(res,"userName");
         done();
       })
     })
