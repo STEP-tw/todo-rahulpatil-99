@@ -1,5 +1,6 @@
 const chai = require('chai');
 const assert = chai.assert;
+const Item = require('../lib/item.js');
 const File=require('../lib/file.js');
 
 describe('File',()=>{
@@ -40,11 +41,20 @@ describe('File',()=>{
     })
   })
 
+  describe('getTodoItem',()=>{
+    it('should give required todo item in the file',()=>{
+      let sample = new File('sample',"sample test");
+      sample.addTodoItem("write test");
+      sample.addTodoItem("play cricket");
+      assert.deepEqual(sample.getTodoItem("play cricket"),new Item("play cricket"));
+    })
+  })
+
   describe('addTodoItem',()=>{
     it('should add todo item in item list',()=>{
       let sample = new File('sample',"sample test");
-      let item={content:"write test", status:false};
-      sample.addTodoItem(item);
+      let item = new Item("write test");
+      sample.addTodoItem("write test");
       assert.deepEqual(sample.getTodoItems(),[item]);
     })
   })
@@ -52,12 +62,11 @@ describe('File',()=>{
   describe('deleteTodoItem',()=>{
     it('should delete todo item from item list',()=>{
       let sample = new File('sample',"sample test");
-      let item1={content:"write plan", status:false};
-      let item2={content:"write test", status:false};
-      sample.addTodoItem(item1);
-      sample.addTodoItem(item2);
+      let item = new Item("write plan");
+      sample.addTodoItem("write plan");
+      sample.addTodoItem("write test");
       sample.deleteTodoItem("write test");
-      assert.deepEqual(sample.getTodoItems(),[item1])
+      assert.deepEqual(sample.getTodoItems(),[item])
     })
   })
 });

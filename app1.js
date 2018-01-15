@@ -6,6 +6,7 @@ const webApp = require('./webapp');
 const fs = require('fs');
 const registeredUsers=[{userName:"rahul", pass:"rp123"},
                        {userName:"raghav", pass:"rg234"}];
+let loggedUser=undefined;
 
 let loadUser = (req,res)=>{
   let sessionid = req.cookies.sessionid;
@@ -59,6 +60,7 @@ app.post('/index.html',(req,res)=>{
   let sessionid = new Date().getTime();
   res.setHeader('Set-Cookie',`sessionid=${sessionid}`);
   user.sessionid = sessionid;
+  loggedUser=new User(user.userName);
   res.redirect('/home.html');
 });
 
@@ -79,6 +81,7 @@ app.get('/logout.html',(req,res)=>{
       res.redirect('/index.html');
       return;
     }
+  loggedUser=undefined;
   res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
   res.redirect('/index.html');
 });
