@@ -1,11 +1,11 @@
 const chai = require('chai');
 const assert = chai.assert;
-const Item=require('../lib/item.js');
+const Task=require('../lib/task.js');
 
-describe('Item',()=>{
+describe('Task',()=>{
   describe('getContent',()=>{
     it('should give content of the item',()=>{
-      let play = new Item('play cricket');
+      let play = new Task('play cricket');
       let expected=play.getContent();
       assert.equal("play cricket",expected);
     })
@@ -13,7 +13,7 @@ describe('Item',()=>{
 
   describe('getStatus',()=>{
     it('should give status of the item',()=>{
-      let play = new Item('play cricket');
+      let play = new Task('play cricket');
       let expected=play.getStatus();
       assert.equal(false,expected);
     })
@@ -21,7 +21,7 @@ describe('Item',()=>{
 
   describe('changeStatus',()=>{
     it('should update the status of the item',()=>{
-      let play = new Item('play cricket');
+      let play = new Task('play cricket');
       play.changeStatus(true);
       assert.isOk(play.getStatus());
     })
@@ -29,7 +29,7 @@ describe('Item',()=>{
 
   describe('setAsDone',()=>{
     it('should update the status of the item as true',()=>{
-      let play = new Item('play cricket');
+      let play = new Task('play cricket');
       play.setAsDone();
       assert.isOk(play.getStatus());
     })
@@ -37,7 +37,7 @@ describe('Item',()=>{
 
   describe('setAsUndone',()=>{
     it('should update the status of the item as false',()=>{
-      let play = new Item('play cricket');
+      let play = new Task('play cricket');
       play.setAsUndone();
       assert.isNotOk(play.getStatus());
     })
@@ -45,7 +45,7 @@ describe('Item',()=>{
 
   describe('updateContent',()=>{
     it('should replace the content of the item',()=>{
-      let play=new Item('play cricket');
+      let play=new Task('play cricket');
       play.updateContent("play football");
       assert.equal(play.getContent(),"play football");
     })

@@ -1,7 +1,7 @@
 const chai = require('chai');
 const assert = chai.assert;
-const File = require('../lib/file.js');
-const Item = require('../lib/item.js');
+const Todo = require('../lib/todo.js');
+const Task = require('../lib/task.js');
 const User = require('../lib/user.js');
 
 describe('User',()=>{
@@ -24,7 +24,7 @@ describe('User',()=>{
       let rahul = new User('rahulp');
       rahul.addTodo("sample","sample test");
       rahul.addTodo("test","sample todo test");
-      assert.deepEqual(rahul.getTodo("sample"),new File("sample","sample test"));
+      assert.deepEqual(rahul.getTodo("sample"),new Todo("sample","sample test"));
     })
   })
 
@@ -51,7 +51,7 @@ describe('User',()=>{
       let rahul = new User('rahulp');
       rahul.addTodo("sample","sample test");
       rahul.addTodoItem("sample","test add function");
-      let todoItem = new Item("test add function");
+      let todoItem = new Task("test add function");
       assert.deepEqual(rahul.getTodoItems("sample"),[todoItem]);
     })
   })
@@ -61,7 +61,7 @@ describe('User',()=>{
       let rahul = new User('rahulp');
       rahul.addTodo("sample","sample test");
       rahul.addTodoItem("sample","test add function");
-      let todoItem = new Item("test add function");
+      let todoItem = new Task("test add function");
       assert.deepEqual(rahul.getTodoItems("sample"),[todoItem]);
     })
   })
@@ -73,7 +73,7 @@ describe('User',()=>{
       rahul.addTodoItem("sample","test add function");
       rahul.addTodoItem("sample","prepare for test");
       rahul.deleteTodoItem("sample","prepare for test")
-      let todoItem = new Item("test add function");
+      let todoItem = new Task("test add function");
       assert.deepEqual(rahul.getTodoItems("sample"),[todoItem]);
     })
   })
@@ -84,7 +84,7 @@ describe('User',()=>{
       rahul.addTodo("sample","sample test");
       rahul.addTodoItem("sample","test add function");
       rahul.markAsDone("sample","test add function");
-      let todoItem = new Item("test add function",true);
+      let todoItem = new Task("test add function",true);
       assert.deepEqual(rahul.getTodoItems("sample"),[todoItem]);
     })
   })
@@ -95,7 +95,7 @@ describe('User',()=>{
       rahul.addTodo("sample","sample test");
       rahul.addTodoItem("sample","test add function",true);
       rahul.markAsNotDone("sample","test add function");
-      let todoItem = new Item("test add function");
+      let todoItem = new Task("test add function");
       assert.deepEqual(rahul.getTodoItems("sample"),[todoItem]);
     })
   })
@@ -106,8 +106,8 @@ describe('User',()=>{
       rahul.addTodo("sample","sample test");
       rahul.addTodoItem("sample","write essay");
       rahul.editTodo("sample","practice","practice file");
-      let todoItem =new Item("write essay");
-      let practice = new File("practice","practice file",[todoItem]);
+      let todoItem =new Task("write essay");
+      let practice = new Todo("practice","practice file",[todoItem]);
       assert.deepEqual(rahul.getAllTodo(),["practice"]);
       assert.deepEqual(rahul.getTodo("practice"),practice);
     })
@@ -119,8 +119,8 @@ describe('User',()=>{
       rahul.addTodo("sample","sample test");
       rahul.addTodoItem("sample","write essay");
       rahul.editTodoItem("sample","write essay","write test");
-      let todoItem =new Item("write test");
-      let sample = new File("sample","sample test",[todoItem]);
+      let todoItem =new Task("write test");
+      let sample = new Todo("sample","sample test",[todoItem]);
       assert.deepEqual(rahul.getTodo("sample"),sample)
     })
   })

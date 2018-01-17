@@ -4,9 +4,6 @@ const fs = require('fs');
 const registeredUsers=[{userName:"rahul", pass:"rp123"},
                        {userName:"raghav", pass:"rg234"}];
 
-const UserHandler = require('./lib/userHandler.js');
-let todoApp = new UserHandler();
-
 let loadLoginPage= (req,res)=>{
   let content=fs.readFileSync("./public/login.html");
   res.setHeader('Content-Type',getContentType('/login.html'));
