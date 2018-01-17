@@ -67,24 +67,30 @@ let convertToHtml=function(req,res){
   }).join('')|| "";
 }
 
+let loadLoginPage = function(req,res){
+  let content=fs.readFileSync("./public/login.html");
+  res.setHeader('Content-Type',getContentType('/login.html'));
+  res.write(content);
+  res.end();
+}
+let changeStatus = function(req,status){
+  let userUpdate=req.body.todoItem;
+  let userData=getUserData();
+  let todo=getTODO(currentTodoFile);
+  let todoItem = todo.items.find(item=>item.todoItem==userUpdate);
+  todoItem.status=status;
+  userData[currentTodoFile]=todo;
+  return userData;
+}
+
 let app=webApp.create();
-app.get('/',(req,res)=>{
-  let content=fs.readFileSync("./public/index.html");
-  res.setHeader('Content-Type',getContentType('/index.html'));
-  res.write(content);
-  res.end();
-});
-app.get('/index.html',(req,res)=>{
-  let content=fs.readFileSync("./public/index.html");
-  res.setHeader('Content-Type',getContentType('/index.html'));
-  res.write(content);
-  res.end();
-});
-app.post('/index.html',(req,res)=>{
+app.get('/',loadLoginPage);
+app.get('/login.html',loadLoginPage);
+app.post('/login.html',(req,res)=>{
   let user = registeredUsers.find(u=>u.userName==req.body.userName);
   if(!user){
     res.setHeader('Set-Cookie',"message=login failed; Max-Age=5")
-    res.redirect("/index.html");
+    res.redirect("/login.html");
     return;
   }
   let sessionid = new Date().getTime();
@@ -94,10 +100,11 @@ app.post('/index.html',(req,res)=>{
   createFileForNewUser();
   res.redirect('/home.html');
 });
+
 app.get('/home.html',(req,res)=>{
   if(!req.cookies.sessionid || !currentUser){
       res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
-    res.redirect("/index.html");
+    res.redirect("/login.html");
     return;
   }
   let html=fs.readFileSync("./public/home.html",'utf8');
@@ -112,7 +119,7 @@ app.get('/home.html',(req,res)=>{
 app.get('/create.html',(req,res)=>{
   if(!currentUser){
       res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
-    res.redirect("/index.html");
+    res.redirect("/login.html");
     return;
   }
   let content=fs.readFileSync("./public/create.html");
@@ -133,7 +140,7 @@ app.post('/create.html',(req,res)=>{
 app.get('/addItem.html',(req,res)=>{
   if(!currentUser){
       res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
-    res.redirect("/index.html");
+    res.redirect("/login.html");
     return;
   }
   let content=fs.readFileSync("./public/addItem.html");
@@ -162,12 +169,7 @@ app.get('/done.html',(req,res)=>{
   res.end();
 });
 app.post('/done.html',(req,res)=>{
-  let userUpdate=req.body.todoItem;
-  let userData=getUserData();
-  let todo=getTODO(currentTodoFile);
-  let todoItem = todo.items.find(item=>item.todoItem==userUpdate);
-  todoItem.status="Done";
-  userData[currentTodoFile]=todo;
+  let userData=changeStatus(req,"Done");
   fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
   res.redirect('/home.html');
 });
@@ -183,12 +185,7 @@ app.get('/notDone.html',(req,res)=>{
   res.end();
 });
 app.post('/notDone.html',(req,res)=>{
-  let userUpdate=req.body.todoItem;
-  let userData=getUserData();
-  let todo=getTODO(currentTodoFile);
-  let todoItem = todo.items.find(item=>item.todoItem==userUpdate);
-  todoItem.status="notDone";
-  userData[currentTodoFile]=todo;
+  let userData = changeStatus(req,"notDone");
   fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
   res.redirect('/home.html');
 });

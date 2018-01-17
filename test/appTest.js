@@ -6,7 +6,7 @@ let app = require('../app.js')
 
 describe('app',()=>{
   describe('GET /bad',()=>{
-    it('redirects to index.html',done=>{
+    it('should give not found message',done=>{
       request(app,{method:'GET',url:'/bad'},(res)=>{
         assert.equal(res.statusCode,404);
         done();
@@ -15,7 +15,7 @@ describe('app',()=>{
   })
 
   describe('GET /',()=>{
-    it('redirects to index.html',done=>{
+    it('redirects to login.html',done=>{
       request(app,{method:'GET',url:'/'},(res)=>{
         th.status_is_ok(res);
         th.content_type_is(res,'text/html');
@@ -25,9 +25,9 @@ describe('app',()=>{
     })
   })
 
-  describe('GET /index.html',()=>{
-    it('gives the index page',done=>{
-      request(app,{method:'GET',url:'/index.html'},res=>{
+  describe('GET /login.html',()=>{
+    it('gives the login page',done=>{
+      request(app,{method:'GET',url:'/login.html'},res=>{
         th.status_is_ok(res);
         th.content_type_is(res,'text/html');
         th.body_contains(res,"userName");
@@ -37,9 +37,9 @@ describe('app',()=>{
     })
   })
 
-  describe('POST /index.html',()=>{
+  describe('POST /login.html',()=>{
     it('redirects to home for valid user',done=>{
-      request(app,{method:'POST',url:'/index.html',body:'userName=rahul'},res=>{
+      request(app,{method:'POST',url:'/login.html',body:'userName=rahul'},res=>{
         th.should_be_redirected_to(res,'/home.html');
         th.should_not_have_cookie(res,'message');
         done();
@@ -47,8 +47,8 @@ describe('app',()=>{
     })
 
     it('redirects to login for inValid user',done=>{
-      request(app,{method:'POST',url:'/index.html',body:'userName=abc'},res=>{
-        th.should_be_redirected_to(res,'/index.html');
+      request(app,{method:'POST',url:'/login.html',body:'userName=abc'},res=>{
+        th.should_be_redirected_to(res,'/login.html');
         th.should_have_expiring_cookie(res,'message',"login failed");
         done();
       })

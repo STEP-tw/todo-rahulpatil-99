@@ -1,13 +1,23 @@
-const Item = require('./lib/item.js');
-const File = require('./lib/file.js');
-const User = require('./lib/user.js');
 const timeStamp = require('./time.js').timeStamp;
 const webApp = require('./webapp');
 const fs = require('fs');
 const registeredUsers=[{userName:"rahul", pass:"rp123"},
                        {userName:"raghav", pass:"rg234"}];
-let loggedUser=undefined;
 
+const UserHandler = require('./lib/userHandler.js');
+let todoApp = new UserHandler();
+
+let loadLoginPage= (req,res)=>{
+  let content=fs.readFileSync("./public/login.html");
+  res.setHeader('Content-Type',getContentType('/login.html'));
+  if(req.user) {res.redirect('/home'); return}
+  if(req.cookies.message) {
+    resetCookie(res,'message');
+    res.write(req.cookies.message);
+  }
+  res.write(content);
+  res.end();
+}
 let loadUser = (req,res)=>{
   let sessionid = req.cookies.sessionid;
   let user = registeredUsers.find(u=>u.sessionid==sessionid);
@@ -15,6 +25,12 @@ let loadUser = (req,res)=>{
     req.user = user;
   }
 };
+let setCookie = (res,key,value)=>{
+  res.setHeader('Set-Cookie',`${key}=${value}`);
+}
+let resetCookie = (res,key)=>{
+  res.setHeader('Set-Cookie',`${key}=0; Expires=${new Date(1).toUTCString()}`);
+}
 let getContentType=function(file){
   let fileDetails = file.split('.');
   let extension = fileDetails[1];
@@ -31,42 +47,27 @@ let getContentType=function(file){
 
 let app=webApp.create();
 app.use(loadUser);
-app.get('/',(req,res)=>{
-  let content=fs.readFileSync("./public/index.html");
-  res.setHeader('Content-Type',getContentType('/index.html'));
-  res.write(content);
-  res.end();
-});
-
-app.get('/index.html',(req,res)=>{
-  let content=fs.readFileSync("./public/index.html");
-  res.setHeader('Content-Type',getContentType('/index.html'));
-  if(req.cookies.message) {
-    res.setHeader('Set-Cookie',`message=login failed; Expires=${new Date(1).toUTCString()}`);
-    res.write("wrong input");
-  }
-  res.write(content);
-  res.end();
-});
-
-app.post('/index.html',(req,res)=>{
+app.get('/',loadLoginPage);
+app.get('/login',loadLoginPage);
+app.post('/login',(req,res)=>{
   let user = registeredUsers.find(u=>
     u.userName==req.body.userName && u.pass==req.body.pass);
   if(!user){
-    res.setHeader('Set-Cookie',"message=login failed")
-    res.redirect("/index.html");
+    setCookie(res,"message","login failed")
+    res.setHeader('Set-Cookie',"message=login failed");
+    res.redirect("/login");
     return;
   }
   let sessionid = new Date().getTime();
-  res.setHeader('Set-Cookie',`sessionid=${sessionid}`);
+  setCookie(res,'sessionid',sessionid);
   user.sessionid = sessionid;
-  loggedUser=new User(user.userName);
-  res.redirect('/home.html');
+  res.redirect('/home');
 });
 
-app.get('/home.html',(req,res)=>{
+app.get('/home',(req,res)=>{
   if(!req.user){
-    res.redirect("/index.html");
+    setCookie(res,"message","login failed");
+    res.redirect("/login");
     return;
   }
   let html=fs.readFileSync("./public/home.html",'utf8');
@@ -75,15 +76,14 @@ app.get('/home.html',(req,res)=>{
   res.write(html)
   res.end();
 })
-
-app.get('/logout.html',(req,res)=>{
+app.get('/logout',(req,res)=>{
   if(!req.user){
-      res.redirect('/index.html');
+      setCookie(res,'message',"login first");
+      res.redirect('/login');
       return;
     }
-  loggedUser=undefined;
-  res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
-  res.redirect('/index.html');
+  resetCookie(res,'sessionid');
+  res.redirect('/login');
 });
 
 module.exports = app;
