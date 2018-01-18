@@ -1,10 +1,47 @@
 const timeStamp = require('./time.js').timeStamp;
 const webApp = require('./webapp');
 const fs = require('fs');
-const registeredUsers=[{userName:"rahul"},{userName:"raghav"}];
-let currentUser=undefined;
-let currentTodoFile=undefined;
+const registeredUsers=[{userName:"rahul", pass:"rp123"},
+                       {userName:"raghav", pass:"rg234"}];
+const toHtml = require('./src/toHtml.js');
+const CurrentUser = require('./src/currentUser.js')
+let converter=new toHtml();
+let currentUser=new CurrentUser();
 
+
+let loadUser = (req,res)=>{
+  let sessionid = req.cookies.sessionid;
+  let user = registeredUsers.find(u=>u.sessionid==sessionid);
+  if(sessionid && user){
+    req.user = user;
+  }
+};
+let redirectUnloggedUserToLogin= (req,res)=>{
+  let urls=['/home','/create','/logout','/view'];
+  if(req.urlIsOneOf(urls) && !req.user){
+    res.setHeader('Set-Cookie',"message=login properly!");
+    res.redirect("/login");
+  }
+}
+let redirectLoggedUserToHome= (req,res)=>{
+  if(req.urlIsOneOf(['/','/login']) && req.user){
+    res.redirect("/home");
+  }
+}
+
+let loadLoginPage= (req,res)=>{
+  let content=fs.readFileSync("./public/login.html");
+  res.setHeader('Content-Type',getContentType('/login.html'));
+  if(req.cookies.message) {
+    resetCookie(res,'message');
+    res.write(req.cookies.message);
+  }
+  res.write(content);
+  res.end();
+}
+let resetCookie = (res,key)=>{
+  res.setHeader('Set-Cookie',`${key}=0; Expires=${new Date(1).toUTCString()}`);
+}
 let getContentType=function(file){
   let fileDetails = file.split('.');
   let extension = fileDetails[1];
@@ -18,186 +55,67 @@ let getContentType=function(file){
   }
   return mimeType[extension];
 }
-let createFileForNewUser=function(){
-  if(!fs.existsSync(`./data/${currentUser.userName}.json`)){
-    fs.writeFileSync(`./data/${currentUser.userName}.json`,"{}");
-  }
-  return;
-}
-let getUserData=function(){
-  let userData=fs.readFileSync(`./data/${currentUser.userName}.json`,'utf8');
-  if(!userData) return " ";
-  return JSON.parse(userData);
-}
-let getTODO=function(todoName){
-  let data=getUserData();
-  return data[todoName];
-}
-let convertTODOtoHtml=function(todoDetails){
-  let html=`<h1>${todoDetails.title}</h1><h2>${todoDetails.description}`;
-  let items= todoDetails.items.map(function(item){
-    return `<h4>* ${item.todoItem}     ${item.status}</h4>`;
-  }).join('')||'';
-  return html+items;
-}
-let generateHandlerForTODO=function(req,res){
-  let userData=getUserData();
-  Object.keys(userData).map(function(name){
-    app.get(`/${name}`,(req,res)=>{
-      if(!currentUser){
-        res.redirect('/index.html');
-        return;
-      }
-      let todoDetails = getTODO(`${name}`);
-      res.write(convertTODOtoHtml(todoDetails));
-      currentTodoFile=`${name}`;
-      res.write('<h3><a href="addItem.html">add</a></h3>');
-      res.write('<h3><a href="done.html">done</a></h3>');
-      res.write('<h3><a href="notDone.html">notDone</a></h3>');
-      res.write('<h3><a href="home.html">Home</a></h3>');
-      res.write('<h3><a href="logout.html">Logout</a></h3>');
-      res.end();
-    });
-  })
-}
-let convertToHtml=function(req,res){
-  let userData=getUserData();
-  return Object.keys(userData).map(function(name){
-    return "<h4><a href="+`/${name}`+`>${name}</a></h4>`;
-  }).join('')|| "";
-}
-
-let loadLoginPage = function(req,res){
-  let content=fs.readFileSync("./public/login.html");
-  res.setHeader('Content-Type',getContentType('/login.html'));
-  res.write(content);
-  res.end();
-}
-let changeStatus = function(req,status){
-  let userUpdate=req.body.todoItem;
-  let userData=getUserData();
-  let todo=getTODO(currentTodoFile);
-  let todoItem = todo.items.find(item=>item.todoItem==userUpdate);
-  todoItem.status=status;
-  userData[currentTodoFile]=todo;
-  return userData;
-}
 
 let app=webApp.create();
+app.use(loadUser);
+app.use(redirectUnloggedUserToLogin);
+app.use(redirectLoggedUserToHome);
+
 app.get('/',loadLoginPage);
-app.get('/login.html',loadLoginPage);
-app.post('/login.html',(req,res)=>{
-  let user = registeredUsers.find(u=>u.userName==req.body.userName);
+app.get('/login',loadLoginPage);
+app.post('/login',(req,res)=>{
+  let user = registeredUsers.find(u=>
+    u.userName==req.body.userName && u.pass==req.body.pass);
   if(!user){
-    res.setHeader('Set-Cookie',"message=login failed; Max-Age=5")
-    res.redirect("/login.html");
+    res.setHeader('Set-Cookie',"message=login properly!");
+    res.redirect("/login");
     return;
   }
+  currentUser.storeUser(user.userName);
   let sessionid = new Date().getTime();
   res.setHeader('Set-Cookie',`sessionid=${sessionid}`);
   user.sessionid = sessionid;
-  currentUser=user;
-  createFileForNewUser();
-  res.redirect('/home.html');
+  res.redirect('/home');
 });
-
-app.get('/home.html',(req,res)=>{
-  if(!req.cookies.sessionid || !currentUser){
-      res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
-    res.redirect("/login.html");
-    return;
-  }
+app.get('/home',(req,res)=>{
   let html=fs.readFileSync("./public/home.html",'utf8');
   res.setHeader('Content-Type',getContentType('/home.html'));
-  res.write(`<h1>WELCOME ${currentUser.userName}</h1>`);
-  generateHandlerForTODO(req,res);
-  let newcontent=html.replace('replacer',convertToHtml(req,res));
-  res.write(newcontent);
-  currentTodoFile="";
+  let userFiles=currentUser.getAllTitle();
+  let todos=converter.convertToRadio(userFiles);
+  res.write(`<h1>WELCOME ${req.user.userName}</h1>`);
+  let newHtml=html.replace('replacer',todos);
+  res.write(newHtml);
   res.end();
-})
-app.get('/create.html',(req,res)=>{
-  if(!currentUser){
-      res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
-    res.redirect("/login.html");
-    return;
-  }
-  let content=fs.readFileSync("./public/create.html");
+});
+app.get('/create',(req,res)=>{
+  let html = fs.readFileSync('./public/create.html');
   res.setHeader('Content-Type',getContentType('/create.html'));
-  res.write(content);
+  res.write(html);
   res.end();
-})
-app.post('/create.html',(req,res)=>{
-  let givenDetails=req.body;
-  let userData=getUserData();
-  let todoFile=req.body.title;
-  userData[todoFile] = req.body;
-  userData[todoFile].items=[];
-  fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
-  currentTodoFile=todoFile;
-  res.redirect('/addItem.html');
 });
-app.get('/addItem.html',(req,res)=>{
-  if(!currentUser){
-      res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
-    res.redirect("/login.html");
-    return;
-  }
-  let content=fs.readFileSync("./public/addItem.html");
+app.post('/create',(req,res)=>{
+  currentUser.addTodo(req.body);
+  res.redirect('/home');
+});
+app.post('/view',(req,res)=>{
+  let html=fs.readFileSync("./public/view.html",'utf8');
+  res.setHeader('Content-Type',getContentType('/home.html'));
+  let todo = currentUser.getTodo(req.body.todo);
+  let convertedTodo=converter.convertTodoToHtml(todo);
+  let newHtml=html.replace('replacer',convertedTodo);
+  res.write(newHtml);
+  res.end();
+});
+app.get('/add',(req,res)=>{
+  let html = fs.readFileSync('./public/addItem.html');
   res.setHeader('Content-Type',getContentType('/addItem.html'));
-  res.write(content);
+  res.write(html);
   res.end();
-})
-app.post('/addItem.html',(req,res)=>{
-  let givenItem=req.body;
-  let userData=getUserData();
-  let todo=getTODO(currentTodoFile);
-  todo.items.push(givenItem);
-  userData[currentTodoFile]=todo;
-  fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
-  res.redirect('/home.html');
-});
-app.get('/done.html',(req,res)=>{
-  if(!currentUser){
-      res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
-    res.redirect("/index.html");
-    return;
-  }
-  let content=fs.readFileSync("./public/done.html");
-  res.setHeader('Content-Type',getContentType('/done.html'));
-  res.write(content);
-  res.end();
-});
-app.post('/done.html',(req,res)=>{
-  let userData=changeStatus(req,"Done");
-  fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
-  res.redirect('/home.html');
-});
-app.get('/notDone.html',(req,res)=>{
-  if(!currentUser){
-      res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
-    res.redirect("/index.html");
-    return;
-  }
-  let content=fs.readFileSync("./public/notDone.html");
-  res.setHeader('Content-Type',getContentType('/notDone.html'));
-  res.write(content);
-  res.end();
-});
-app.post('/notDone.html',(req,res)=>{
-  let userData = changeStatus(req,"notDone");
-  fs.writeFileSync(`./data/${currentUser.userName}.json`,JSON.stringify(userData));
-  res.redirect('/home.html');
 });
 
-app.get('/logout.html',(req,res)=>{
-  if(!req.cookies.sessionid){
-      res.redirect('/index.html');
-      return;
-    }
-    currentUser={};
-    res.setHeader('Set-Cookie',`sessionid=0; Expires=${new Date(1).toUTCString()}`);
-    res.redirect('/index.html');
+app.get('/logout',(req,res)=>{
+  resetCookie(res,'sessionid');
+  res.redirect('/login');
 });
 
 module.exports = app;

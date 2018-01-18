@@ -2,7 +2,7 @@ let chai = require('chai');
 let assert = chai.assert;
 let request = require('./testFrameWork/requestSimulator.js');
 let th = require('./testFrameWork/testHelper.js');
-const app = require('../todoApp.js');
+const app = require('../app.js');
 
 describe('New app',()=>{
   describe('GET /bad',()=>{
@@ -56,7 +56,7 @@ describe('New app',()=>{
     it('redirects inValid user to login',done=>{
       request(app,{method:'POST',url:'/login',body:'userName=abc'},res=>{
         th.should_be_redirected_to(res,'/login');
-        th.should_have_cookie(res,'message',"login failed");
+        th.should_have_cookie(res,'message',"login properly!");
         done();
       })
     })
@@ -77,7 +77,7 @@ describe('New app',()=>{
     it('should redirect to login page if no user present',(done)=>{
       request(app,{method:'GET',url:'/logout'},res=>{
         th.should_be_redirected_to(res,'/login');
-        th.should_have_cookie(res,'message',"login first");
+        th.should_have_cookie(res,'message',"login properly!");
         done();
       })
     })

@@ -12,10 +12,18 @@ describe('User',()=>{
     })
   })
 
-  describe('getAllTodo',()=>{
-    it('should give all todo',()=>{
+  describe('getAllId',()=>{
+    it('should give all todo id',()=>{
       let rahul = new User('rahulp');
-      assert.deepEqual(rahul.getAllTodo(),[]);
+      assert.deepEqual(rahul.getAllId(),[]);
+    })
+  })
+
+  describe('getId',()=>{
+    it('should give id of todo',()=>{
+      let rahul = new User('rahulp');
+      rahul.addTodo("sample","sample file")
+      assert.equal(rahul.getId("sample"),1);
     })
   })
 
@@ -24,7 +32,7 @@ describe('User',()=>{
       let rahul = new User('rahulp');
       rahul.addTodo("sample","sample test");
       rahul.addTodo("test","sample todo test");
-      assert.deepEqual(rahul.getTodo("sample"),new Todo("sample","sample test"));
+      assert.deepEqual(rahul.getTodo("sample"),new Todo("sample","sample test",1));
     })
   })
 
@@ -32,7 +40,7 @@ describe('User',()=>{
     it('should add todo',()=>{
       let rahul = new User('rahulp');
       rahul.addTodo("sample","sample test");
-      assert.deepEqual(rahul.getAllTodo(),['sample']);
+      assert.deepEqual(rahul.getAllTitle(),['sample']);
     })
   })
 
@@ -42,7 +50,7 @@ describe('User',()=>{
       rahul.addTodo("sample","sample test");
       rahul.addTodo("test","sample todo test");
       rahul.deleteTodo("sample");
-      assert.deepEqual(rahul.getAllTodo(),['test']);
+      assert.deepEqual(rahul.getAllTitle(),['test']);
     })
   })
 
@@ -107,8 +115,8 @@ describe('User',()=>{
       rahul.addTodoItem("sample","write essay");
       rahul.editTodo("sample","practice","practice file");
       let todoItem =new Task("write essay");
-      let practice = new Todo("practice","practice file",[todoItem]);
-      assert.deepEqual(rahul.getAllTodo(),["practice"]);
+      let practice = new Todo("practice","practice file",1,[todoItem]);
+      assert.deepEqual(rahul.getAllTitle(),["practice"]);
       assert.deepEqual(rahul.getTodo("practice"),practice);
     })
   })
@@ -120,7 +128,7 @@ describe('User',()=>{
       rahul.addTodoItem("sample","write essay");
       rahul.editTodoItem("sample","write essay","write test");
       let todoItem =new Task("write test");
-      let sample = new Todo("sample","sample test",[todoItem]);
+      let sample = new Todo("sample","sample test",1,[todoItem]);
       assert.deepEqual(rahul.getTodo("sample"),sample)
     })
   })
