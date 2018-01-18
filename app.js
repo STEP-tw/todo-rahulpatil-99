@@ -4,10 +4,9 @@ const fs = require('fs');
 const registeredUsers=[{userName:"rahul", pass:"rp123"},
                        {userName:"raghav", pass:"rg234"}];
 const toHtml = require('./src/toHtml.js');
-const CurrentUser = require('./src/currentUser.js')
+const CurrentUser = require('./src/currentUser.js');
 let converter=new toHtml();
 let currentUser=new CurrentUser();
-
 
 let loadUser = (req,res)=>{
   let sessionid = req.cookies.sessionid;
@@ -81,9 +80,9 @@ app.get('/home',(req,res)=>{
   let html=fs.readFileSync("./public/home.html",'utf8');
   res.setHeader('Content-Type',getContentType('/home.html'));
   let userFiles=currentUser.getAllTitle();
-  let todos=converter.convertToRadio(userFiles);
+  let form=converter.generateForm(userFiles);
   res.write(`<h1>WELCOME ${req.user.userName}</h1>`);
-  let newHtml=html.replace('replacer',todos);
+  let newHtml=html.replace('form',form);
   res.write(newHtml);
   res.end();
 });
@@ -94,10 +93,15 @@ app.get('/create',(req,res)=>{
   res.end();
 });
 app.post('/create',(req,res)=>{
-  currentUser.addTodo(req.body);
+  let input=req.body;
+  currentUser.addTodo(input.title,input.description,input.task);
   res.redirect('/home');
 });
 app.post('/view',(req,res)=>{
+  if(!req.body.todo){
+    res.redirect('/home');
+    return;
+  }
   let html=fs.readFileSync("./public/view.html",'utf8');
   res.setHeader('Content-Type',getContentType('/home.html'));
   let todo = currentUser.getTodo(req.body.todo);
@@ -106,13 +110,20 @@ app.post('/view',(req,res)=>{
   res.write(newHtml);
   res.end();
 });
-app.get('/add',(req,res)=>{
-  let html = fs.readFileSync('./public/addItem.html');
+app.post('/add',(req,res)=>{
+  let title=Object.keys(req.body)[0];
+  let html = fs.readFileSync('./public/addItem.html','utf8');
   res.setHeader('Content-Type',getContentType('/addItem.html'));
-  res.write(html);
+  let checkbox=`todo: <input type="text" name="todo" value="${title}" readonly><br><br>`;
+  let newHtml=html.replace('todo',checkbox);
+  res.write(newHtml);
   res.end();
 });
-
+app.post('/addItem',(req,res)=>{
+  let input=req.body;
+  currentUser.addTodoItem(input.todo,input.task,input.status);
+  res.redirect('/home');
+})
 app.get('/logout',(req,res)=>{
   resetCookie(res,'sessionid');
   res.redirect('/login');
